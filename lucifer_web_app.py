@@ -257,9 +257,8 @@ Remember, stay in character.
             st.session_state['chat_history'].append({"role": "assistant", "content": full_response})
             
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 400:
-                 st.error("API Error (400): Bad Request. Check system instructions or prompt length.")
-            elif e.response.status_code == 403 or e.response.status_code == 401:
+            # 💡 معالجة خطأ API بشكل صحيح
+            if e.response.status_code == 403 or e.response.status_code == 401:
                  st.error("API Error: Authentication Failed. Please check your Gemini API Key.")
                  st.session_state['api_configured'] = False 
                  st.rerun() 

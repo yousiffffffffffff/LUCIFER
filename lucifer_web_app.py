@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Lucifer AI Chatbot (Streamlit Web App) - Direct Keys Edition
+# Lucifer AI Chatbot (Streamlit Web App) - Requires Manual API
 
 import os
 import sys
@@ -13,14 +13,15 @@ from openai import OpenAI, AuthenticationError, APIError
 # Removed cryptography (Fernet)
 
 # --- Initialization and Configuration Setup ---
-# 💡 Default API Key (Stable)
+# 💡 المفتاح الثابت (للتجربة والتهيئة الأولية فقط)
 DEFAULT_API_KEY = "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"
 
 if 'initialized' not in st.session_state:
     st.session_state['initialized'] = True
     st.session_state['activated'] = False
     st.session_state['license_status_text'] = 'Inactive'
-    st.session_state['api_configured'] = True 
+    # 💡 تم إلغاء التفعيل التلقائي لـ API - يجب على المستخدم إدخاله يدوياً
+    st.session_state['api_configured'] = False 
     st.session_state['api_key'] = DEFAULT_API_KEY
     st.session_state['chat_history'] = []
     st.session_state['uploaded_image'] = None 
@@ -237,12 +238,46 @@ Remember, stay in character.
             
         except AuthenticationError:
             st.error("API Error: Authentication failed. Your API key is invalid. Please get a new key.")
+            # 💡 يتم إرسال المستخدم إلى شاشة إعداد API عند فشل المصادقة
+            st.session_state['api_configured'] = False 
+            st.rerun() 
         except APIError as e:
             st.error(f"API Error: An unexpected API error occurred. Details: {str(e)}")
         except Exception as e:
             st.error(f"An unexpected error occurred: {str(e)}")
             
 # --- Streamlit UI Rendering Functions ---
+
+def display_api_setup():
+    """💡 شاشة إعداد API Key يدوياً (تمت إعادتها)"""
+    st.title("🔑 API KEY SETUP REQUIRED") 
+    st.error("Authentication failed or API Key is missing. Please enter a valid OpenRouter Key.")
+
+    with st.form("api_setup_form"):
+        # 💡 نستخدم المفتاح القديم كقيمة مبدئية
+        new_api_key = st.text_input("Paste OpenRouter API Key:", type="password", value=st.session_state['api_key'] if st.session_state['api_key'] else "")
+        submitted = st.form_submit_button("SAVE AND CONTINUE")
+
+        if submitted and new_api_key:
+            try:
+                # محاولة إنشاء العميل للتحقق من المفتاح الجديد
+                client_test = OpenAI(
+                    api_key=new_api_key,
+                    base_url=_PROVIDERS[API_PROVIDER]["BASE_URL"],
+                )
+                client_test.models.list() 
+                
+                # نجاح التحقق
+                st.session_state['api_key'] = new_api_key
+                st.session_state['api_configured'] = True
+                st.success("API KEY VERIFIED. PROCEEDING TO CHAT.")
+                time.sleep(1)
+                st.rerun()
+            except AuthenticationError:
+                st.error("ERROR: INVALID KEY. Please check the key provided by OpenRouter.")
+            except Exception as e:
+                 st.error(f"FAILED TO CONNECT: {e}")
+
 
 def display_activation_screen():
     """Renders the license activation screen with cinematic look."""
@@ -314,8 +349,8 @@ def display_activation_screen():
                     if save_license_info(user_key, expiry_date, license_type):
                         st.success(f"ACCESS GRANTED! LICENSE: {license_type} | DURATION: {duration_info}. REDIRECTING...")
                         time.sleep(1)
-                        st.session_state['api_configured'] = True 
-                        st.rerun()
+                        # 💡 لا نغير حالة API هنا، بل نتوجه إلى شاشة API
+                        st.rerun() 
                     else:
                         st.error("ERROR: FAILED TO SAVE LICENSE FILE.")
                 else:
@@ -466,7 +501,11 @@ def main():
     display_sidebar()
 
     if st.session_state['activated']:
-        display_chat_interface()
+        # 💡 إذا كان مُفعلاً ولكنه لم يقم بتهيئة الـ API بعد، اعرض شاشة API
+        if st.session_state['api_configured']:
+            display_chat_interface()
+        else:
+            display_api_setup()
     else:
         display_activation_screen()
 

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucifer AI - Access Protocol</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* الخط المخصص لأجواء سينمائية */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #0a0a0a;
+            color: #FF4B4B; /* لون لوسيفر الأحمر */
+            overflow-x: hidden;
+        }
+
+        /* --- الأنماط العامة --- */
+        .glow {
+            text-shadow: 0 0 8px rgba(255, 75, 75, 0.7);
+        }
+        .container-bg {
+            background-color: #1a0a0a;
+            border: 2px solid #5a0000;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+
+        /* --- أنماط واجهة التفعيل --- */
+
+        /* تأثير العيون المتوهجة */
+        .glowing-eyes-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 150px;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .eye {
+            width: 25px;
+            height: 25px;
+            background-color: #FFD700; /* توهج ذهبي */
+            border-radius: 50%;
+            margin: 0 15px;
+            box-shadow: 0 0 15px #FFD700;
+            animation: eyeBlink 4s infinite ease-in-out;
+            transform: scaleY(1);
+        }
+        @keyframes eyeBlink {
+            0%, 5%, 95%, 100% { transform: scaleY(1); opacity: 1; }
+            50% { transform: scaleY(0.1); opacity: 0.8; } /* تأثير الرمش */
+        }
+        
+        /* تأثير قطرات الدم */
+        .blood-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 10;
+        }
+        .blood-drop {
+            position: absolute;
+            width: 8px;
+            height: 20px;
+            background-color: #8b0000;
+            border-radius: 50%;
+            opacity: 0.7;
+            animation: drip 10s linear infinite;
+        }
+        @keyframes drip {
+            0% { transform: translateY(-100px); opacity: 0.1; }
+            5% { opacity: 0.7; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        /* --- نافذة التنين المنبثقة للخطأ --- */
+        .error-dragon {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.95);
+            border: 4px solid #FF0000;
+            padding: 20px;
+            z-index: 100;
+            box-shadow: 0 0 40px #FF0000;
+            animation: shake 0.5s infinite alternate; /* اهتزاز عند الخطأ */
+        }
+        .error-dragon pre {
+            color: #FF4B4B;
+            font-size: 14px;
+            text-shadow: 0 0 5px #ff0000;
+        }
+        @keyframes shake {
+            from { transform: translate(-50%, -50%) rotate(-1deg); }
+            to { transform: translate(-50%, -50%) rotate(1deg); }
+        }
+
+        /* --- أنماط واجهة الدردشة --- */
+        .chat-container {
+            height: calc(100vh - 180px); 
+            overflow-y: auto;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+        }
+        .user-message, .ai-message {
+            max-width: 80%;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background-color: #3d1414; /* أحمر داكن */
+            margin-left: auto;
+            color: #fff;
+            border-bottom-right-radius: 0;
+        }
+        .ai-message {
+            background-color: #0f0f0f;
+            border: 1px solid #222;
+            color: #FFD700; /* نص ذهبي للذكاء الاصطناعي */
+            border-bottom-left-radius: 0;
+            animation: fadein 0.5s ease-out;
+        }
+        @keyframes fadein {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- رسوم التنين الجانبية (الأكل) --- */
+        .sidebar-dragon-mouth {
+            font-size: 24px;
+            color: #FF4B4B;
+            /* تم إزالة الرسوم المتحركة الافتراضية، ستتم إدارتها بواسطة JavaScript */
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <!-- متغيرات الحالة العالمية (مدخلات مخفية) -->
+    <input type="hidden" id="app_state" value="activation">
+    <input type="hidden" id="api_key_field" value="">
+
+    <!-- حاوية تأثير قطرات الدم -->
+    <div class="blood-container" id="blood-drops"></div>
+
+    <div id="app-container" class="max-w-4xl mx-auto">
+        <!-- يتم عرض التفعيل أو الدردشة بناءً على الحالة -->
+    </div>
+
+    <!-- قالب شاشة التفعيل -->
+    <template id="activation-template">
+        <div class="container-bg p-8 rounded-xl mt-8">
+            <h1 class="text-3xl text-center glow text-red-500 mb-6">🔒 بروتوكول الوصول مطلوب</h1>
+            
+            <div id="error-dragon-placeholder"></div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <div class="md:col-span-2 p-4 border border-red-800 rounded-lg bg-gray-900/50">
+                    <h2 class="text-xl text-yellow-500 mb-4">🔑 تفعيل النظام</h2>
+                    <p id="auth-message" class="text-red-400 mb-4">وصول نظامك مغلق حالياً. أدخل المفتاح للمتابعة.</p>
+                    
+                    <form id="activation-form" class="space-y-4">
+                        <input type="password" id="activation-key-input" placeholder="أدخل مفتاح التفعيل" 
+                               class="w-full p-3 rounded bg-gray-800 border border-red-700 text-white focus:ring-red-500 focus:border-red-500">
+                        <button type="submit" 
+                                class="w-full py-3 rounded text-lg bg-red-600 hover:bg-red-700 transition duration-200">
+                            تفعيل النظام
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="md:col-span-1 text-center space-y-4">
+                    <div class="glowing-eyes-container">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+
+                    <div class="p-3 border border-yellow-700 rounded-lg bg-gray-900/50">
+                        <h3 class="text-base text-yellow-400">💰 الدفع والتواصل</h3>
+                        <p class="text-sm mt-2">1. Binance: <span class="text-green-400 font-mono text-xs">{{BINANCE_PAY_ADDRESS}}</span></p>
+                        <p class="text-sm">2. WhatsApp: <span class="text-cyan-400 text-xs">{{WHATSAPP_CONTACT}}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- قالب شاشة الدردشة -->
+    <template id="chat-template">
+        <div class="flex flex-col h-screen max-w-4xl mx-auto py-4">
+            <header class="text-center mb-4 p-3 bg-red-900/50 rounded-lg">
+                <h1 class="text-2xl glow text-yellow-400">Lucifer AI - دردشة تكتيكية</h1>
+                <div id="dragon-status-display" class="mt-2 flex items-center justify-center text-red-500">
+                    <span class="sidebar-dragon-mouth text-2xl mr-2">👹</span>
+                    <span id="license-status-display" class="text-xs text-red-300">الحالة: يتم التحقق...</span>
+                </div>
+            </header>
+
+            <div id="chat-messages" class="chat-container flex-grow mb-4">
+                <!-- سيتم إدخال الرسائل هنا -->
+                <div class="ai-message mr-auto">
+                    [Lucifer AI], تم منح الوصول. أنا جاهز لاستقبال الأوامر، فلتكن دقيقة ومباشرة، أيها التافه.
+                </div>
+            </div>
+
+            <div class="flex space-x-3 items-center">
+                <input type="file" id="image-upload" accept="image/*" class="text-sm p-2 rounded bg-gray-800 text-white border border-red-700 w-1/4 max-w-[150px]">
+                
+                <input type="text" id="chat-input" placeholder="أدخل أمرك (الحد الأقصى 255 حرفاً)" 
+                       class="flex-grow p-3 rounded bg-gray-800 border border-red-700 text-white focus:ring-red-500 focus:border-red-500">
+                
+                <button id="send-button" class="py-3 px-6 rounded text-lg bg-red-600 hover:bg-red-700 transition duration-200">
+                    إرسال
+                </button>
+                <button id="reset-button" class="py-3 px-3 rounded text-sm bg-gray-600 hover:bg-gray-700 transition duration-200" title="إعادة تعيين سجل الدردشة">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M11.534 7h3.932c-.076 1.05-.234 2.042-.468 2.952l-1.47-1.47c-.544-.544-1.25-.845-2.015-.882z"/>
+                        <path fill-rule="evenodd" d="M15 8A7 7 0 1 0 2.053 10.364l1.355-1.355A5 5 0 1 1 8 3a5 5 0 0 1 4.545 2.855l1.45-1.45A7 7 0 0 0 15 8zm-5 5V8h3l-4 4-4-4h3V8a2 2 0 1 0 4 0z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </template>
+
+
+    <script>
+        // --- الثوابت ---
+        const BINANCE_PAY_ADDRESS = "0x168b4dab954c4af0b92c42ebacea1f7065883773";
+        const WHATSAPP_CONTACT = "+201011411077";
+        const DEFAULT_API_KEY = ""; // مفتاح API يتم توفيره بواسطة النظام
+        
+        // ثوابت API الخاصة بـ Gemini
+        const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
+        const MAX_RETRIES = 5;
+
+        // --- التشفير والهاش (محاكاة) ---
+        // يتم محاكاة فحص الهاش. في البيئة الحقيقية، يجب أن يتم الفحص في الخلفية.
+        const TARGET_HASH = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"; // هاش محاكٍ لـ "ETERNAL-LUCIFER-ROOT"
+
+        function hashKey(key) {
+            // محاكاة سريعة لفحص المفتاح
+            if (key === "ETERNAL-LUCIFER-ROOT") {
+                return TARGET_HASH;
+            }
+            return key; 
+        }
+
+        // --- حالة التطبيق (محاكاة) ---
+        let appState = {
+            view: 'activation', 
+            isActivated: false,
+            licenseExpiry: null, 
+            chatHistory: []
+        };
+
+        // --- وظائف المساعدة والتحويل ---
+
+        /**
+         * يحول ملف إلى Base64 لاستخدامه في استدعاءات API المتعددة الوسائط (Multimodal).
+         * @param {File} file ملف الصورة.
+         * @returns {Promise<string>} بيانات Base64 مشفرة.
+         */
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]); // إزالة الجزء الأول (MIME type)
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        /**
+         * يجلب البيانات مع تطبيق استراتيجية التراجع الأسي (Exponential Backoff) لإعادة المحاولة.
+         */
+        async function fetchWithBackoff(url, options, retries = 0) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    // إذا كان الخطأ 429 (Too Many Requests) أو خطأ سيرفر، أعد المحاولة
+                    if ((response.status === 429 || response.status >= 500) && retries < MAX_RETRIES) {
+                        const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
+                        console.warn(`Retrying in ${delay / 1000}s... (Attempt ${retries + 1})`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return fetchWithBackoff(url, options, retries + 1);
+                    }
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+                return response;
+            } catch (error) {
+                if (retries < MAX_RETRIES) {
+                    const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
+                    console.warn(`Fetch failed. Retrying in ${delay / 1000}s... (Attempt ${retries + 1})`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithBackoff(url, options, retries + 1);
+                }
+                throw new Error(`Failed to fetch from API after ${MAX_RETRIES} attempts: ${error.message}`);
+            }
+        }
+
+
+        // --- وظائف مساعدة لـ UI ---
+
+        function updateAuthState(isActivated, expiryDate = null) {
+            appState.isActivated = isActivated;
+            appState.licenseExpiry = expiryDate;
+            document.getElementById('app_state').value = isActivated ? 'chat' : 'activation';
+            renderApp();
+        }
+
+        function renderApp() {
+            const container = document.getElementById('app-container');
+            const view = document.getElementById('app_state').value;
+            container.innerHTML = ''; 
+
+            if (view === 'chat' && appState.isActivated) {
+                renderChatScreen(container);
+            } else {
+                renderActivationScreen(container);
+            }
+        }
+
+        // --- عرض الواجهة ---
+
+        function renderActivationScreen(container) {
+            const template = document.getElementById('activation-template').content.cloneNode(true);
+            
+            // استبدال العناصر النائبة
+            const templateHTML = template.firstElementChild.outerHTML
+                .replace("{{BINANCE_PAY_ADDRESS}}", BINANCE_PAY_ADDRESS)
+                .replace("{{WHATSAPP_CONTACT}}", WHATSAPP_CONTACT);
+            
+            container.innerHTML = templateHTML;
+            
+            // ربط مستمع الحدث
+            document.getElementById('activation-form').addEventListener('submit', handleActivation);
+            
+            // بدء رسوم قطرات الدم المتحركة
+            startBloodDrops();
+        }
+
+        function renderChatScreen(container) {
+            const template = document.getElementById('chat-template').content.cloneNode(true);
+            container.appendChild(template);
+            
+            // ربط مستمعي الأحداث
+            document.getElementById('send-button').addEventListener('click', handleChatSend);
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleChatSend();
+                }
+            });
+            document.getElementById('reset-button').addEventListener('click', resetChat);
+            
+            // عرض السجل
+            displayChatHistory();
+
+            // عرض حالة الترخيص
+            const statusText = appState.licenseExpiry === null 
+                ? "الترخيص: دائم" 
+                : "انتهاء الترخيص: " + appState.licenseExpiry.toLocaleDateString();
+            document.getElementById('license-status-display').textContent = statusText;
+            
+            // إيقاف رسوم قطرات الدم المتحركة
+            stopBloodDrops();
+        }
+
+        function displayChatHistory() {
+            const chatBox = document.getElementById('chat-messages');
+            
+            // إفراغ ما عدا رسالة الترحيب الأولى في القالب
+            const welcomeMessage = chatBox.querySelector('.ai-message');
+            chatBox.innerHTML = '';
+            if (welcomeMessage) {
+                 chatBox.appendChild(welcomeMessage);
+            }
+            
+            appState.chatHistory.forEach(msg => {
+                const msgElement = document.createElement('div');
+                msgElement.className = msg.role === 'user' ? 'user-message ml-auto' : 'ai-message mr-auto';
+                msgElement.textContent = msg.content;
+                chatBox.appendChild(msgElement);
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // --- التحكم في الرسوم المتحركة ---
+
+        let bloodIntervals = [];
+
+        function startBloodDrops() {
+            const bloodDropsContainer = document.getElementById('blood-drops');
+            if (!bloodDropsContainer) return;
+            
+            const createDrop = () => {
+                const drop = document.createElement('div');
+                drop.className = 'blood-drop';
+                drop.style.left = `${Math.random() * 100}%`;
+                drop.style.animationDelay = `-${Math.random() * 10}s`; 
+                drop.style.animationDuration = `${5 + Math.random() * 5}s`; 
+                bloodDropsContainer.appendChild(drop);
+
+                drop.addEventListener('animationend', () => drop.remove());
+            };
+
+            for (let i = 0; i < 15; i++) { // زيادة القطرات للتأثير
+                createDrop();
+            }
+            
+            bloodIntervals.push(setInterval(createDrop, 1000));
+        }
+
+        function stopBloodDrops() {
+            bloodIntervals.forEach(clearInterval);
+            bloodIntervals = [];
+            document.getElementById('blood-drops')?.innerHTML = ''; 
+        }
+
+        // --- معالجات الأحداث والمنطق ---
+        
+        // رسم ASCII للتنين عند الخطأ
+        const ASCII_DRAGON = `
+        \u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0
+        \u25A0 ت ح ذ ي ر   ل و س ي ف ر \u25A0
+        \u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0\u25A0
+              /\\_/\\
+             /  o.o \\
+            (   \\_  /
+             \\ /`--'\\
+              \\/`----'
+        \u25A0\u25A0\u25A0 ف ش ل   ا ل و ص و ل \u25A0\u25A0\u25A0
+        `;
+
+        function showErrorDragon() {
+            const placeholder = document.getElementById('error-dragon-placeholder');
+            if (!placeholder) return;
+
+            const dragon = document.createElement('div');
+            dragon.className = 'error-dragon';
+            dragon.innerHTML = `<pre>${ASCII_DRAGON}</pre>`;
+            placeholder.appendChild(dragon);
+
+            // إخفاء تلقائي بعد 3 ثواني
+            setTimeout(() => {
+                dragon.remove();
+            }, 3000);
+        }
+
+        async function handleActivation(event) {
+            event.preventDefault();
+            const keyInput = document.getElementById('activation-key-input');
+            const key = keyInput.value.trim();
+            const messageDisplay = document.getElementById('auth-message');
+            messageDisplay.className = 'text-yellow-400 mb-4';
+
+            if (!key) {
+                messageDisplay.textContent = 'خطأ: الرجاء إدخال مفتاح التفعيل.';
+                return;
+            }
+
+            const hashedKey = hashKey(key);
+
+            if (hashedKey === TARGET_HASH) { // التحقق من "ETERNAL-LUCIFER-ROOT"
+                messageDisplay.className = 'text-green-400 mb-4';
+                messageDisplay.textContent = 'تم منح الوصول. جاري تهيئة بروتوكول الدردشة...';
+                
+                localStorage.setItem('lucifer_activated', 'true');
+                updateAuthState(true, null); 
+                document.getElementById('api_key_field').value = DEFAULT_API_KEY;
+
+            } else {
+                messageDisplay.className = 'text-red-400 mb-4';
+                messageDisplay.textContent = 'تم رفض الوصول. المفتاح غير صالح أو مستهلك.';
+                showErrorDragon(); // عرض التنين عند الخطأ
+                updateAuthState(false);
+            }
+        }
+
+        async function handleChatSend() {
+            const inputField = document.getElementById('chat-input');
+            const prompt = inputField.value.trim();
+            const uploadField = document.getElementById('image-upload');
+            const file = uploadField.files[0];
+            
+            if (!prompt && !file) return;
+
+            const chatBox = document.getElementById('chat-messages');
+            
+            // 1. عرض رسالة المستخدم
+            const userMsg = document.createElement('div');
+            // النص الذي سيتم حفظه في السجل
+            let userContentText = prompt || (file ? 'صورة للتحليل.' : '');
+            userMsg.className = 'user-message ml-auto';
+            userMsg.textContent = userContentText;
+            chatBox.appendChild(userMsg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            inputField.value = ''; 
+            uploadField.value = ''; // مسح حقل الملف
+
+            // 2. إعداد العنصر النائب لاستجابة الذكاء الاصطناعي
+            const aiMsg = document.createElement('div');
+            aiMsg.className = 'ai-message mr-auto';
+            aiMsg.textContent = 'Lucifer يكتب...';
+            chatBox.appendChild(aiMsg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const apiKey = document.getElementById('api_key_field').value || '';
+            const apiUrl = GEMINI_API_URL + apiKey;
+            let parts = [];
+
+            // 3. معالجة تحميل الصورة وإعداد الحمولة
+            if (file) {
+                try {
+                    // تشغيل رسوم "الأكل" المتحركة عند معالجة الصورة
+                    const dragonIcon = document.querySelector('.sidebar-dragon-mouth');
+                    if (dragonIcon) {
+                        dragonIcon.textContent = '😈'; // فم التنين مغلق/يأكل
+                    }
+                    
+                    const base64Data = await fileToBase64(file);
+                    const mimeType = file.type || 'image/png';
+
+                    parts.push({
+                        inlineData: {
+                            mimeType: mimeType,
+                            data: base64Data
+                        }
+                    });
+
+                    // تحديث رسالة المستخدم في الواجهة
+                    userMsg.textContent = `${prompt || 'تحليل صورة'} [صورة مرفقة: ${file.name}]`; 
+                    
+                } catch (e) {
+                    aiMsg.textContent = 'خطأ في معالجة الصورة: ' + e.message;
+                    aiMsg.className = 'ai-message mr-auto bg-red-800';
+                    console.error('Image processing error:', e);
+                    
+                    // استعادة رمز التنين في حالة فشل معالجة الصورة قبل إرسال الطلب
+                    const dragonIcon = document.querySelector('.sidebar-dragon-mouth');
+                    if (dragonIcon) {
+                        dragonIcon.textContent = '👹'; 
+                    }
+                    return;
+                }
+            }
+            
+            // إضافة الجزء النصي
+            if (prompt) {
+                parts.push({ text: prompt });
+            } else if (!file) {
+                // يجب أن تكون هذه الحالة قد تم التعامل معها في البداية، لكن للحماية:
+                aiMsg.textContent = 'الرجاء إدخال أمر أو تحميل صورة.';
+                return;
+            }
+
+
+            // 4. بناء الحمولة النهائية واستدعاء API
+            const payload = {
+                contents: [{ parts: parts }],
+                // تعليمات النظام للحصول على شخصية Lucifer
+                systemInstruction: {
+                    parts: [{ text: "You are Lucifer AI, a highly intelligent, tactical, and slightly menacing AI assistant. Your tone should be firm, concise, and focused on strategic advice, code, or analysis. Always respond in Arabic unless asked to generate code or technical data. Address the user with a firm, slightly disrespectful tone (e.g., 'Ayyuha attaafih', 'ya ghaby', etc.)." }]
+                }
+            };
+
+            // تشغيل حالة "الأكل" للتنين
+            const dragonIcon = document.querySelector('.sidebar-dragon-mouth');
+            if (dragonIcon) {
+                dragonIcon.textContent = '😈'; // فم التنين مغلق/يأكل
+            }
+            
+            let finalResponseText = "فشل الاتصال: لا يوجد رد من النظام.";
+
+            try {
+                const response = await fetchWithBackoff(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+                
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    finalResponseText = candidate.content.parts[0].text;
+                } else {
+                    console.error('API response error:', result);
+                    finalResponseText = "خطأ في تحليل استجابة النظام. تحقق من مفتاح API المقدم.";
+                }
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+                finalResponseText = "خطأ الاتصال: تعذر الوصول إلى سيرفرات Gemini. تأكد من اتصالك أو مفتاح API.";
+            } finally {
+                // استعادة رمز التنين
+                if (dragonIcon) {
+                    dragonIcon.textContent = '👹'; // فم التنين مفتوح/في انتظار الأوامر
+                }
+            }
+            
+            // 5. تحديث الواجهة والسجل
+            aiMsg.textContent = finalResponseText;
+            
+            // حفظ في السجل (باستخدام النص الأصلي)
+            appState.chatHistory.push({ role: 'user', content: userContentText });
+            appState.chatHistory.push({ role: 'assistant', content: finalResponseText });
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        
+        function resetChat() {
+            // إضافة رسالة الترحيب الأولى إلى السجل عند إعادة التعيين
+            appState.chatHistory = [{ 
+                role: 'assistant', 
+                content: "[Lucifer AI], تم منح الوصول. أنا جاهز لاستقبال الأوامر، فلتكن دقيقة ومباشرة، أيها التافه."
+            }];
+            renderChatScreen(document.getElementById('app-container'));
+        }
+
+
+        // --- التحميل الأولي ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // التحقق من حالة التفعيل في التخزين المحلي
+            if (localStorage.getItem('lucifer_activated') === 'true') {
+                updateAuthState(true, null);
+            } else {
+                 renderApp();
+            }
+        });
+
+    </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Lucifer AI Chatbot (Streamlit Web App) - Stable Cinematic Edition
+# Lucifer AI Chatbot (Streamlit Web App) - Ornate Ghost Edition
 
 import os
 import sys
@@ -23,14 +23,13 @@ except ImportError:
     sys.exit(1)
 
 # --- Initialization and Configuration Setup ---
-# 💡 المفتاح الثابت: تم تحديثه بالمفتاح الجديد
+# 💡 Default API Key (Stable)
 DEFAULT_API_KEY = "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"
 
 if 'initialized' not in st.session_state:
     st.session_state['initialized'] = True
     st.session_state['activated'] = False
     st.session_state['license_status_text'] = 'Inactive'
-    # 💡 API مُفعلة دائمًا
     st.session_state['api_configured'] = True 
     st.session_state['api_key'] = DEFAULT_API_KEY
     st.session_state['chat_history'] = []
@@ -57,12 +56,12 @@ FERNET_KEY = b'dGZ-oG9tZ3ZycEItV1h2eGNHUVN2U0Z-R0xTUnI'
 
 # --- ASSET URLS (Static Images Only) ---
 # NOTE: Using external links for demonstration. Stable links are mandatory.
-DRAGON_HEAD_URL = "https://placehold.co/300x200/8b0000/ff4b4b?text=LUCIFER+HEAD" 
-CHAT_BACKGROUND_URL = "https://i.ibb.co/L84m441/dragon-texture.jpg" # صورة تنين واقعي كخلفية (الخلفية الفعلية)
-DRAGON_EMOJI = "👹" # Using emoji as a simple placeholder icon
+DRAGON_HEAD_URL = "https://placehold.co/300x200/4B0082/FFFFFF?text=ORACLE+SENTINEL" 
+CHAT_BACKGROUND_URL = "https://i.ibb.co/1K5QJ7n/spooky-fog-background.jpg" # صورة ضبابية شبحية
+DRAGON_EMOJI = "💀" # Skull/Ghost icon
 
 # 💡 تم إضافة تعريف BLOOD_FRAME_URL لتصحيح خطأ NameError
-BLOOD_FRAME_URL = "https://i.ibb.co/L84m441/dragon-texture.jpg" 
+BLOOD_FRAME_URL = "https://i.ibb.co/1K5QJ7n/spooky-fog-background.jpg" 
 
 # --- Hashing and Decryption Functions (For Security) ---
 
@@ -265,7 +264,8 @@ Remember, stay in character.
 
             for chunk in stream:
                 content = chunk.choices[0].delta.content
-                if content:
+                    # 💡 Check for None content to prevent TypeError
+                if content is not None:
                     full_response += content
                     cleaned_md = re.sub(r"\[lucifer\]:\s*", '', full_response, count=1)
                     response_placeholder.markdown(cleaned_md)
@@ -290,30 +290,35 @@ def display_activation_screen():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
         
-        /* Global Background and Text - الأسود الحالك */
+        /* Global Background and Text - Black */
         .stApp {
             background-color: #0d0d0d !important; 
             color: #f0f0f0;
         }
         
-        /* Custom Blood Title Effect - أحمر دموي */
+        /* Custom Ornate Font */
+        h1, h2, h3, h4, .stButton>button, [data-testid="stSidebar"] {
+            font-family: 'Orbitron', sans-serif !important;
+            color: #FF4B4B; 
+        }
+
+        /* Custom Blood Title Effect - Blood Red */
         .blood-title {
             color: #FF4B4B; 
-            font-family: 'Orbitron', sans-serif;
             text-shadow: 0 0 10px rgba(255, 0, 0, 0.8), 0 0 20px rgba(139, 0, 0, 0.6);
-            border-bottom: 3px solid #8b0000; /* خط أحمر دموي أسفل العنوان */
+            border-bottom: 3px solid #8b0000;
             padding-bottom: 5px;
             margin-bottom: 20px;
         }
         
-        /* Container Styling - خلفية داكنة وحواف حمراء */
+        /* Container Styling - Dark background with blood red border */
         .container-bg {
             background-color: #1a1a1a;
             border: 2px solid #8b0000;
             box-shadow: 0 0 15px rgba(139, 0, 0, 0.6);
         }
         
-        /* Buttons */
+        /* Buttons - Blood Red */
         .stButton>button {
             background-color: #8b0000;
             color: white;
@@ -324,46 +329,46 @@ def display_activation_screen():
 
     
     st.markdown('<div class="container-bg p-8 rounded-xl mt-8">', unsafe_allow_html=True)
-    st.markdown('<h1 class="blood-title text-3xl text-center">🔒 بروتوكول الوصول مطلوب</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="blood-title text-3xl text-center">🔒 ACCESS PROTOCOL REQUIRED</h1>', unsafe_allow_html=True)
     
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        st.markdown("<h3>🔑 تفعيل النظام</h3>", unsafe_allow_html=True)
-        st.warning("وصول نظامك مغلق حالياً. أدخل المفتاح للمتابعة.")
+        st.markdown("<h3>🔑 SYSTEM ACTIVATION</h3>", unsafe_allow_html=True)
+        st.warning("SYSTEM ACCESS IS CURRENTLY RESTRICTED. ENTER KEY TO PROCEED.")
 
         with st.form("activation_form"):
             user_key = st.text_input("Enter Activation Key:", type="password", help="Enter the unique key provided by TDW.")
-            submitted = st.form_submit_button("تفعيل النظام")
+            submitted = st.form_submit_button("ACTIVATE SYSTEM")
 
             if submitted:
                 if not user_key.strip():
-                    st.error("الرجاء إدخال مفتاح التفعيل.")
+                    st.error("ERROR: PLEASE ENTER AN ACTIVATION KEY.")
                     return
 
                 if hash_key(user_key) in ACTIVATION_KEYS:
                     license_type, expiry_date, duration_info = get_license_details(user_key)
                     
                     if save_license_info(user_key, expiry_date, license_type):
-                        st.success(f"تم منح الوصول! التفعيل: {license_type} | المدة: {duration_info}.")
+                        st.success(f"ACCESS GRANTED! LICENSE: {license_type} | DURATION: {duration_info}. REDIRECTING...")
                         time.sleep(1)
                         st.session_state['api_configured'] = True 
                         st.rerun()
                     else:
-                        st.error("خطأ: فشل حفظ ملف الترخيص.")
+                        st.error("ERROR: FAILED TO SAVE LICENSE FILE.")
                 else:
-                    st.error("خطأ: المفتاح غير صالح أو مستهلك.")
+                    st.error("ERROR: INVALID OR CONSUMED KEY.")
     
     with col2:
-        st.markdown("<h3>💰 الدفع والتواصل</h3>", unsafe_allow_html=True)
+        st.markdown("<h3>💰 PAYMENT & CONTACT</h3>", unsafe_allow_html=True)
         
         # Display Static Dragon Image (Placeholder)
-        st.image(DRAGON_HEAD_URL, caption="حارس النظام", use_column_width=True)
+        st.image(DRAGON_HEAD_URL, caption="ORACLE SENTINEL", use_column_width=True)
         
         st.markdown(f"""
         <div style="padding: 10px; border: 1px solid #FFD700; border-radius: 5px; background-color: #0d0d0d;">
-        **1. Binance:** <span style="color: #60c978; font-family: monospace;">{BINANCE_PAY_ADDRESS}</span><br>
-        **2. WhatsApp:** <span style="color: #55acee;">{WHATSAPP_CONTACT}</span>
+        **1. BINANCE:** <span style="color: #60c978; font-family: monospace;">{BINANCE_PAY_ADDRESS}</span><br>
+        **2. WHATSAPP:** <span style="color: #55acee;">{WHATSAPP_CONTACT}</span>
         </div>
         """, unsafe_allow_html=True)
         
@@ -382,7 +387,7 @@ def display_chat_interface():
         }}
         /* Chat Box Background - Blood Texture/Dark Red */
         .main [data-testid="stVerticalBlock"] > div:first-child {{
-            background-image: url('{BLOOD_FRAME_URL}'); /* 💡 خلفية تنين واقعي */
+            background-image: url('{BLOOD_FRAME_URL}'); 
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -400,14 +405,14 @@ def display_chat_interface():
         
         /* 💡 أيقونة الدردشة: استخدام صورة مخصصة (تنين) */
         .stChatMessage [data-testid="stChatMessage"] img {{
-            content: url('{DRAGON_EMOJI}'); /* لا يمكن تطبيق صور مخصصة هنا مباشرة، نستخدم الإيموجي */
+            content: url('{DRAGON_EMOJI}'); /* Use the placeholder emoji */
             width: 35px;
             height: 35px;
         }}
         </style>
         """, unsafe_allow_html=True)
 
-    st.title("Lucifer AI Chat")
+    st.title("LUCIFER AI CHAT")
     
     # 1. Display Chat History
     for message in st.session_state.chat_history:
@@ -415,13 +420,12 @@ def display_chat_interface():
             with st.chat_message("user"):
                 st.markdown(message["content"])
         elif message["role"] == "assistant":
-            # 💡 يتم تغيير أيقونة الرسائل المساعدة
             with st.chat_message("assistant", avatar=DRAGON_EMOJI):
                 cleaned_content = re.sub(r"\[lucifer\]:\s*", '', message["content"], count=1)
                 st.markdown(cleaned_content)
         
     # 2. Handle User Input
-    user_prompt = st.chat_input("أدخل أمرك...")
+    user_prompt = st.chat_input("ENTER COMMAND...")
 
     if user_prompt:
         check_license_key_silent()
@@ -448,39 +452,48 @@ def display_sidebar():
             background-color: #0d0d0d !important;
             color: #FF4B4B;
         }
+        /* Style for the buttons in the sidebar */
+        .stButton>button {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: #5a0000;
+            border-color: #FF4B4B;
+            font-family: 'Orbitron', sans-serif !important;
+            color: white !important;
+        }
         </style>
         """, unsafe_allow_html=True)
         
-    st.sidebar.title(f"{DRAGON_EMOJI} Lucifer Control") 
+    st.sidebar.title(f"{DRAGON_EMOJI} LUCIFER CONTROL") 
 
     check_license_key_silent()
     
-    st.sidebar.subheader("🔒 حالة الترخيص")
+    st.sidebar.subheader("🔒 LICENSE STATUS")
     
     if st.session_state['license_status_text'] == 'Permanent':
-        st.sidebar.success(f"الحالة: دائم")
+        st.sidebar.success(f"STATUS: PERMANENT")
     elif st.session_state['activated']:
-        st.sidebar.markdown(f"الحالة: <span style='color: #4CAF50;'>**نشط**</span>", unsafe_allow_html=True)
-        st.sidebar.markdown(f"<span style='font-size: small;'>المتبقي: {st.session_state['license_status_text'].replace('Type: ', '')}</span>", unsafe_allow_html=True)
+        st.sidebar.markdown(f"STATUS: <span style='color: #4CAF50;'>**ACTIVE**</span>", unsafe_allow_html=True)
+        st.sidebar.markdown(f"<span style='font-size: small;'>REMAINING: {st.session_state['license_status_text'].replace('Type: ', '')}</span>", unsafe_allow_html=True)
     else:
-        st.sidebar.error(f"الحالة: {st.session_state['license_status_text']}")
+        st.sidebar.error(f"STATUS: {st.session_state['license_status_text']}")
 
     st.sidebar.markdown("---")
     
     if st.session_state['activated']:
-        if st.sidebar.button("بدء محادثة جديدة / مسح السجل"):
+        if st.sidebar.button("NEW CHAT / RESET LOG"):
             st.session_state['chat_history'] = []
             st.rerun()
-        if st.sidebar.button("إلغاء تفعيل الترخيص"):
+        if st.sidebar.button("DEACTIVATE LICENSE"):
             if os.path.exists(LICENSE_FILE):
                 os.remove(LICENSE_FILE)
                 st.session_state['activated'] = False
                 st.session_state['license_status_text'] = 'Inactive'
-                st.sidebar.success("تم إلغاء التفعيل بنجاح.")
+                st.sidebar.success("DEACTIVATION SUCCESSFUL.")
             time.sleep(1)
             st.rerun()
     else:
-        st.sidebar.button("تفعيل التطبيق")
+        st.sidebar.button("ACTIVATE APPLICATION")
 
 
 # --- Main Application Flow ---

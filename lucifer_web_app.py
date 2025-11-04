@@ -23,8 +23,8 @@ except ImportError:
     sys.exit(1)
 
 # --- Initialization and Configuration Setup ---
-# 💡 المفتاح الثابت: يتم تضمينه مباشرة
-DEFAULT_API_KEY = "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"
+# 💡 المفتاح الثابت: تم تحديثه بالمفتاح الجديد
+DEFAULT_API_KEY = "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"
 
 if 'initialized' not in st.session_state:
     st.session_state['initialized'] = True

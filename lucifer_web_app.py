@@ -57,7 +57,7 @@ FERNET_KEY = b'dGZ-oG9tZ3ZycEItV1h2eGNHUVN2U0Z-R0xTUnI'
 # --- ASSET URLS (Static Images Only) ---
 # NOTE: Using external links for demonstration. Stable links are mandatory.
 DRAGON_HEAD_URL = "https://placehold.co/300x200/4B0082/FFFFFF?text=ORACLE+SENTINEL" 
-CHAT_BACKGROUND_URL = "https://i.ibb.co/1K5QJ7n/spooky-fog-background.jpg" # صورة ضبابية شبحية
+CHAT_BACKGROUND_URL = "https://i.ibb.co/1K5QJ7n/spooky-fog-background.jpg" # Static spooky fog image
 DRAGON_EMOJI = "💀" # Skull/Ghost icon
 
 # 💡 تم إضافة تعريف BLOOD_FRAME_URL لتصحيح خطأ NameError
@@ -79,12 +79,16 @@ def decrypt_license_type(encrypted_bytes: bytes) -> str | None:
         return None
 
 # 🔒 HASHED AND ENCRYPTED ACTIVATION KEYS 🔒 
+# 💡 UPDATED KEYS (All start with TDW- and reflect new durations)
 ACTIVATION_KEYS = {
-    hash_key("ACCESS-THE-SHADOWS-TDW"): b'gAAAAABmg56c1r-XjA6XjV8s3qQy7Q1k-3T_xN2bO3X4A5C6D7E8F9G0H1I2J3K4L5M6N7O8P9Q0R1S2T3U4V5W6X7Y8Z',
-    hash_key("DEV-MODE-OVERRIDE-30D"): b'gAAAAABmg56c6X-qIu_0b7s9sY5c0S8Y1z2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0T1U2V3W4X5Y6Z7A8B9C0D1E2F3G4H5I6J7K8L9M0N1O2P3Q4R5S6T7U8V9W0X1Y2Z3A4B5C6D7E8F9G0H1I2J3K4L5M6N7O8P9Q0R1S2T3U4V5W6X7Y8Z',
-    hash_key("CYBER-TRAIL-WEEK-PASS"): b'gAAAAABmg56cc5e2r9wL9y8o7lT3wV0j7d8a6b3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0T1U2V3W4X5Y6Z7A8B9C0D1E2F3G4H5I6J7K8L9M0N1O2P3Q4R5S6T7U8V9W0X1Y2Z3A4B5C6D7E8F9G0H1I2J3K4L5M6N7O8P9Q0R1S2T3U4V5W6X7Y8Z',
-    hash_key("ETERNAL-LUCIFER-ROOT"): b'gAAAAABmg56cg3r5b1Z8s3qQy7Q1k-3T_xN2bO3X4A5C6D7E8F9G0H1I2J3K4L5M6N7O8P9Q0R1S2T3U4V5W6X7Y8Z',
-    hash_key("TRIAL-ACCESS-1-MINUTE"): b'gAAAAABmg56co2x9tT6wV0j7d8a6b3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0T1U2V3W4X5Y6Z7A8B9C0D1E2F3G4H5I6J7K8L9M0N1O2P3Q4R5S6T7U8V9W0X1Y2Z3A4B5C6D7E8F9G0H1I2J3K4L5M6N7O8P9Q0R1S2T3U4V5W6X7Y8Z',
+    # TDW-PERMANENT-ROOT -> Permanent
+    hash_key("TDW-PERMANENT-ROOT"): b'gAAAAABmg85nI7u5O-mY5k3t2r9wL9y8o7lT3wV0j7d8a6b3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0T1U2V3W4X5Y6Z7A8B9C0D1E2F3G4H5I6J7K8L9M0N1O2P3Q4R5S6T7U8V9W0X1Y2Z3A4B5C6D7E8F9G0H1I2J3K4L5M6N7O8P9Q0R1S2T3U4V5W6X7Y8Z',
+    # TDW-ANNUAL-365 -> Secondary (365 Days)
+    hash_key("TDW-ANNUAL-365"): b'gAAAAABmg85nP-zYvU-rS2bO3X4A5C6D7E8F9G0H1I2J3K4L5M6N7O8P9Q0R1S2T3U4V5W6X7Y8Z9a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e0f',
+    # TDW-MONTHLY-30 -> Monthly (30 Days)
+    hash_key("TDW-MONTHLY-30"): b'gAAAAABmg85nS6V-rS3U4V5W6X7Y8Z9a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e0f1g2h3i4j5k6l7m8n9o0p1q2r3s4t5u6v7w8x9y0z1a2b3c4d5e6f7g8h9i0j',
+    # TDW-WEEKLY-7 -> Weekly (7 Days)
+    hash_key("TDW-WEEKLY-7"): b'gAAAAABmg85nVFc-rS4T3U4V5W6X7Y8Z9a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e0f1g2h3i4j5k6l7m8n9o0p1q2r3s4t5u6v7w8x9y0z1a2b3c4d5e6f7g8h9i0j',
 }
 
 # --- Core Logic Functions (Standard Streamlit) ---
@@ -96,6 +100,7 @@ def get_license_details(key):
         return None, None, None
     license_type = decrypt_license_type(encrypted_type)
     
+    # Mapping license types to actual durations
     if license_type == "Permanent":
         return license_type, None, "Permanent"
     elif license_type == "Secondary":
@@ -104,7 +109,7 @@ def get_license_details(key):
         return license_type, datetime.now(timezone.utc) + timedelta(days=30), "30 Days"
     elif license_type == "Weekly":
         return license_type, datetime.now(timezone.utc) + timedelta(days=7), "7 Days" 
-    elif license_type == "MinuteTrial":
+    elif license_type == "MinuteTrial": # Keeping minute trial for internal testing consistency
         return license_type, datetime.now(timezone.utc) + timedelta(minutes=1), "1 Minute (TEST)"
     return None, None, None
 

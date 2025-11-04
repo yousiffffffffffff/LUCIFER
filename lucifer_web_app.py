@@ -58,9 +58,11 @@ FERNET_KEY = b'dGZ-oG9tZ3ZycEItV1h2eGNHUVN2U0Z-R0xTUnI'
 # --- ASSET URLS (Static Images Only) ---
 # NOTE: Using external links for demonstration. Stable links are mandatory.
 DRAGON_HEAD_URL = "https://placehold.co/300x200/8b0000/ff4b4b?text=LUCIFER+HEAD" 
-CHAT_BACKGROUND_URL = "https://i.ibb.co/L84m441/dragon-texture.jpg" # صورة تنين واقعي كخلفية
-DRAGON_WALK_GIF = "https://i.ibb.co/X8gP4b2/dragon-walk.gif" # GIF تنين يمشي
+CHAT_BACKGROUND_URL = "https://i.ibb.co/L84m441/dragon-texture.jpg" # صورة تنين واقعي كخلفية (الخلفية الفعلية)
 DRAGON_EMOJI = "👹" # Using emoji as a simple placeholder icon
+
+# 💡 تم إضافة تعريف BLOOD_FRAME_URL لتصحيح خطأ NameError
+BLOOD_FRAME_URL = "https://i.ibb.co/L84m441/dragon-texture.jpg" 
 
 # --- Hashing and Decryption Functions (For Security) ---
 

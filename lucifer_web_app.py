@@ -228,13 +228,13 @@ Remember, stay in character.
         base_url = _PROVIDERS[API_PROVIDER]["BASE_URL"]
         model_endpoint = _PROVIDERS[API_PROVIDER]["MODEL_NAME"]
         
+        # 💡 Gemini URL structure: BASE_URL + MODEL + ?key=API_KEY
         api_url = f"{base_url}{model_endpoint}?key={self.api_key}"
 
         try:
             # 4. API Call
             response_placeholder = st.empty()
             
-            # 💡 NOTE: Gemini API often returns a standard JSON object, not a stream
             response = requests.post(
                 api_url,
                 headers={'Content-Type': 'application/json'},
@@ -282,7 +282,7 @@ def display_api_setup():
 
         if submitted and new_api_key:
             try:
-                # 💡 لا يمكننا التحقق من مفتاح Gemini بدون عمل مكلف. نفترض صحته ونترك الفشل للدردشة.
+                # 💡 نفترض صحة المفتاح ونترك الفشل لـ get_response (للتوفير في عدد الطلبات)
                 
                 st.session_state['api_key'] = new_api_key
                 st.session_state['api_configured'] = True
@@ -373,7 +373,7 @@ def display_chat_interface():
 
     st.title("LUCIFER AI CHAT")
     
-    for message in st.session_state.chatHistory:
+    for message in st.session_state.chat_history:
         if message["role"] == "user":
             with st.chat_message("user"):
                 st.markdown(message["content"])

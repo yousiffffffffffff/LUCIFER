@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Lucifer AI Chatbot (Streamlit Web App) - Ornate Ghost Edition
+# Lucifer AI Chatbot (Streamlit Web App) - Direct Keys Edition
 
 import os
 import sys
@@ -9,18 +9,8 @@ import json
 import streamlit as st
 from datetime import datetime, timedelta, timezone, date
 from openai import OpenAI, AuthenticationError, APIError
-import hashlib 
-import base64
-import io
-import requests
-from PIL import Image
-
-# --- Dependency Check for Fernet Encryption ---
-try:
-    from cryptography.fernet import Fernet
-except ImportError:
-    st.error("Cryptography package is not installed. Please install it using: pip install cryptography")
-    sys.exit(1)
+# Removed hashlib, base64, io, requests, PIL (since we removed hashing and image multimodal)
+# Removed cryptography (Fernet)
 
 # --- Initialization and Configuration Setup ---
 # 💡 Default API Key (Stable)
@@ -51,58 +41,26 @@ LICENSE_FILE = ".lucifer.lic"
 BINANCE_PAY_ADDRESS = "0x168b4dab954c4af0b92c42ebacea1f7065883773"
 WHATSAPP_CONTACT = "+201011411077"
 
-# 🛡️ GLOBAL ENCRYPTION KEY 🛡️ 
-FERNET_KEY = b'dGZ-oG9tZ3ZycEItV1h2eGNHUVN2U0Z-R0xTUnI' 
-
 # --- ASSET URLS (Static Images Only) ---
-# NOTE: Using external links for demonstration. Stable links are mandatory.
-DRAGON_HEAD_URL = "https://placehold.co/300x200/4B0082/FFFFFF?text=ORACLE+SENTINEL" 
-CHAT_BACKGROUND_URL = "https://i.ibb.co/1K5QJ7n/spooky-fog-background.jpg" # Static spooky fog image
-DRAGON_EMOJI = "💀" # Skull/Ghost icon
-
-# 💡 تم إضافة تعريف BLOOD_FRAME_URL لتصحيح خطأ NameError
+DRAGON_HEAD_URL = "https://placehold.co/300x200/8b0000/ff4b4b?text=ORACLE+SENTINEL" 
+CHAT_BACKGROUND_URL = "https://i.ibb.co/1K5QJ7n/spooky-fog-background.jpg" 
+DRAGON_EMOJI = "💀" 
 BLOOD_FRAME_URL = "https://i.ibb.co/1K5QJ7n/spooky-fog-background.jpg" 
 
-# --- Hashing and Decryption Functions (For Security) ---
-
-def hash_key(key: str) -> str:
-    """Computes the SHA256 hash of the input key string."""
-    return hashlib.sha256(key.encode('utf-8')).hexdigest()
-
-def decrypt_license_type(encrypted_bytes: bytes) -> str | None:
-    """Decrypts the license type string using the Fernet key."""
-    try:
-        f = Fernet(FERNET_KEY)
-        decrypted_bytes = f.decrypt(encrypted_bytes)
-        return decrypted_bytes.decode('utf-8')
-    except Exception:
-        return None
-
-# 🔒 HASHED AND ENCRYPTED ACTIVATION KEYS 🔒 
-# 💡 تم تحديث القيم المشفرة لتتناسب مع مدة الترخيص الصحيحة
+# 🔑 ACTIVATION KEYS - VALUES ARE NOW CLEAR TEXT FOR STABILITY 🔑
 ACTIVATION_KEYS = {
-    # TDW-PERMANENT-ROOT -> Permanent
-    hash_key("TDW-PERMANENT-ROOT"): b'gAAAAABmg87aJ7u5O-mY5k3t2r9wL9y8o7lT3wV0j7d8a6b3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0T1U2V3W4X5Y6Z7A8B9C0D1E2F3G4H5I6J7K8L9M0N1O2P3Q4R5S6T7U8V9W0X1Y2Z3A4B5C6D7E8F9G0H1I2J3K4L5M6N7O8P9Q0R1S2T3U4V5W6X7Y8Z',
-    # TDW-ANNUAL-365 -> Secondary (365 Days)
-    hash_key("TDW-ANNUAL-365"): b'gAAAAABmg87aP-zYvU-rS2bO3X4A5C6D7E8F9G0H1I2J3K4L5M6N7O8P9Q0R1S2T3U4V5W6X7Y8Z9a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e0f',
-    # TDW-MONTHLY-30 -> Monthly (30 Days)
-    hash_key("TDW-MONTHLY-30"): b'gAAAAABmg87aT6V-rS3U4V5W6X7Y8Z9a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e0f1g2h3i4j5k6l7m8n9o0p1q2r3s4t5u6v7w8x9y0z1a2b3c4d5e6f7g8h9i0j',
-    # TDW-WEEKLY-7 -> Weekly (7 Days)
-    hash_key("TDW-WEEKLY-7"): b'gAAAAABmg87aVFc-rS4T3U4V5W6X7Y8Z9a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e0f1g2h3i4j5k6l7m8n9o0p1q2r3s4t5u6v7w8x9y0z1a2b3c4d5e6f7g8h9i0j',
-    # Keeping minute trial for internal testing consistency
-    hash_key("TRIAL-ACCESS-1-MINUTE"): b'gAAAAABmg56co2x9tT6wV0j7d8a6b3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0T1U2V3W4X5Y6Z7A8B9C0D1E2F3G4H5I6J7K8L9M0N1O2P3Q4R5S6T7U8V9W0X1Y2Z3A4B5C6D7E8F9G0H1I2J3K4L5M6N7O8P9Q0R1S2T3U4V5W6X7Y8Z',
+    "TDW-PERMANENT-ROOT": "Permanent",
+    "TDW-ANNUAL-365": "Secondary", # Maps to 365 Days
+    "TDW-MONTHLY-30": "Monthly",   # Maps to 30 Days
+    "TDW-WEEKLY-7": "Weekly",       # Maps to 7 Days
 }
 
 # --- Core Logic Functions (Standard Streamlit) ---
 
 def get_license_details(key):
-    hashed_input = hash_key(key)
-    encrypted_type = ACTIVATION_KEYS.get(hashed_input)
-    if not encrypted_type:
-        return None, None, None
-    license_type = decrypt_license_type(encrypted_type)
+    """Determines the license type and duration based on the clear text key."""
+    license_type = ACTIVATION_KEYS.get(key)
     
-    # Mapping license types to actual durations
     if license_type == "Permanent":
         return license_type, None, "Permanent"
     elif license_type == "Secondary":
@@ -111,8 +69,6 @@ def get_license_details(key):
         return license_type, datetime.now(timezone.utc) + timedelta(days=30), "30 Days"
     elif license_type == "Weekly":
         return license_type, datetime.now(timezone.utc) + timedelta(days=7), "7 Days" 
-    elif license_type == "MinuteTrial": # Keeping minute trial for internal testing consistency
-        return license_type, datetime.now(timezone.utc) + timedelta(minutes=1), "1 Minute (TEST)"
     return None, None, None
 
 def load_license_info():
@@ -271,7 +227,6 @@ Remember, stay in character.
 
             for chunk in stream:
                 content = chunk.choices[0].delta.content
-                    # 💡 Check for None content to prevent TypeError
                 if content is not None:
                     full_response += content
                     cleaned_md = re.sub(r"\[lucifer\]:\s*", '', full_response, count=1)
@@ -353,7 +308,7 @@ def display_activation_screen():
                     st.error("ERROR: PLEASE ENTER AN ACTIVATION KEY.")
                     return
 
-                if hash_key(user_key) in ACTIVATION_KEYS:
+                if user_key in ACTIVATION_KEYS: # Direct check
                     license_type, expiry_date, duration_info = get_license_details(user_key)
                     
                     if save_license_info(user_key, expiry_date, license_type):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Lucifer AI Chatbot (Streamlit Web App) - Requires Manual API
+# Lucifer AI Chatbot (Streamlit Web App) - Original B structure
 
 import os
 import sys
@@ -8,47 +8,45 @@ import time
 import json
 import streamlit as st
 from datetime import datetime, timedelta, timezone, date
-from openai import OpenAI, AuthenticationError, APIError
-# Removed hashlib, base64, io, requests, PIL (since we removed hashing and image multimodal)
-# Removed cryptography (Fernet)
+# 💡 حذف استيراد openai لأننا سنستخدم requests مباشرة لـ Gemini
+# from openai import OpenAI, AuthenticationError, APIError 
+import requests 
 
 # --- Initialization and Configuration Setup ---
-# 💡 المفتاح الثابت (للتجربة والتهيئة الأولية فقط)
-DEFAULT_API_KEY = "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"
 
 if 'initialized' not in st.session_state:
     st.session_state['initialized'] = True
     st.session_state['activated'] = False
     st.session_state['license_status_text'] = 'Inactive'
-    # 💡 تم إلغاء التفعيل التلقائي لـ API - يجب على المستخدم إدخاله يدوياً
     st.session_state['api_configured'] = False 
-    st.session_state['api_key'] = DEFAULT_API_KEY
+    st.session_state['api_key'] = "" 
     st.session_state['chat_history'] = []
     st.session_state['uploaded_image'] = None 
     st.session_state['image_display_key'] = 0 
 
 # Supported providers and their settings
 _PROVIDERS = {
-    "openrouter": { 
-        "BASE_URL": "https://openrouter.ai/api/v1",
-        "MODEL_NAME": "mistralai/mistral-7b-instruct-v0.2", 
+    # 💡 المزود الأساسي الآن هو Gemini
+    "gemini_test": {
+        "BASE_URL": "https://generativelanguage.googleapis.com/v1beta/models/",
+        "MODEL_NAME": "gemini-2.5-flash:generateContent",
     },
 }
 
-API_PROVIDER = "openrouter" 
+# 💡 المزود الافتراضي (للاستخدام المجاني)
+API_PROVIDER = "gemini_test" 
 
-# --- CONFIGURATION & CONSTANTS ---
+# --- CONFIGURATION & CONSTANTS (Reverting to original style) ---
 LICENSE_FILE = ".lucifer.lic"
 BINANCE_PAY_ADDRESS = "0x168b4dab954c4af0b92c42ebacea1f7065883773"
 WHATSAPP_CONTACT = "+201011411077"
 
-# --- ASSET URLS (Static Images Only) ---
-DRAGON_HEAD_URL = "https://placehold.co/300x200/8b0000/ff4b4b?text=ORACLE+SENTINEL" 
-CHAT_BACKGROUND_URL = "https://i.ibb.co/1K5QJ7n/spooky-fog-background.jpg" 
-DRAGON_EMOJI = "💀" 
-BLOOD_FRAME_URL = "https://i.ibb.co/1K5QJ7n/spooky-fog-background.jpg" 
+# --- ASSET URLS (Simple Placeholders) ---
+DRAGON_EMOJI = "👹" 
+DRAGON_HEAD_URL = "https://placehold.co/300x200/8b0000/ff4b4b?text=LUCIFER+HEAD" 
+BLOOD_FRAME_URL = "https://placehold.co/1920x1080/0d0d0d/8b0000?text=BACKGROUND"
 
-# 🔑 ACTIVATION KEYS - VALUES ARE NOW CLEAR TEXT FOR STABILITY 🔑
+# 🔑 ACTIVATION KEYS - No Hashing/Encryption (Original clear text style)
 ACTIVATION_KEYS = {
     "TDW-PERMANENT-ROOT": "Permanent",
     "TDW-ANNUAL-365": "Secondary", # Maps to 365 Days
@@ -56,7 +54,7 @@ ACTIVATION_KEYS = {
     "TDW-WEEKLY-7": "Weekly",       # Maps to 7 Days
 }
 
-# --- Core Logic Functions (Standard Streamlit) ---
+# --- Core Logic Functions (Reverting to basic) ---
 
 def get_license_details(key):
     """Determines the license type and duration based on the clear text key."""
@@ -196,12 +194,9 @@ Remember, stay in character.
             st.error(f"Error: Unsupported API Provider: {API_PROVIDER}")
             raise ValueError(f"Unsupported API Provider: {API_PROVIDER}")
         
-        # OpenRouter API requires this structure for compatibility
-        self.client = OpenAI(
-            api_key=api_key,
-            base_url=_PROVIDERS[API_PROVIDER]["BASE_URL"], 
-            default_headers={"HTTP-Referer": "Lucifer-Streamlit-App", "X-Title": "lucifer-Web-App"},
-        )
+        # 💡 No OpenAI client needed, just store the key for use in requests
+        self.api_key = api_key
+        
         if st.session_state['chat_history'] == []:
             st.session_state['chat_history'].append({"role": "system", "content": self.HACX_SYSTEM_PROMPT})
             
@@ -213,36 +208,63 @@ Remember, stay in character.
 
         st.session_state['chat_history'].append({"role": "user", "content": user_prompt})
         
-        # Prepare history for API call
-        messages_for_api = [m for m in st.session_state['chat_history'] if m['role'] != 'display']
+        # 1. Prepare history for Gemini API call
+        messages_for_api = [
+            {"role": "user", "parts": [{"text": msg["content"]}]}
+            if msg["role"] == "user" else 
+            {"role": "model", "parts": [{"text": msg["content"]}]}
+            for msg in st.session_state['chat_history']
+        ]
+
+        # 2. Build Payload
+        payload = {
+            "contents": messages_for_api,
+            "config": {
+                "temperature": 0.7
+            }
+        }
+        
+        # 3. Construct URL
+        base_url = _PROVIDERS[API_PROVIDER]["BASE_URL"]
+        model_endpoint = _PROVIDERS[API_PROVIDER]["MODEL_NAME"]
+        
+        api_url = f"{base_url}{model_endpoint}?key={self.api_key}"
 
         try:
-            stream = self.client.chat.completions.create(
-                model=_PROVIDERS[API_PROVIDER]["MODEL_NAME"],
-                messages=messages_for_api,
-                stream=True,
-                temperature=0.7
-            )
-            full_response = ""
+            # 4. API Call
             response_placeholder = st.empty()
-
-            for chunk in stream:
-                content = chunk.choices[0].delta.content
-                if content is not None:
-                    full_response += content
-                    cleaned_md = re.sub(r"\[lucifer\]:\s*", '', full_response, count=1)
-                    response_placeholder.markdown(cleaned_md)
+            
+            # 💡 NOTE: Gemini API often returns a standard JSON object, not a stream
+            response = requests.post(
+                api_url,
+                headers={'Content-Type': 'application/json'},
+                json=payload
+            )
+            response.raise_for_status() 
+            result = response.json()
+            
+            # 5. Extract Response
+            candidate = result.get('candidates', [{}])[0]
+            final_response_text = candidate.get('content', {}).get('parts', [{}])[0].get('text', 'API did not return text.')
+            
+            full_response = final_response_text
+            
+            # Display response
+            cleaned_md = re.sub(r"\[lucifer\]:\s*", '', full_response, count=1)
+            response_placeholder.markdown(cleaned_md)
             
             # Save final response to history
             st.session_state['chat_history'].append({"role": "assistant", "content": full_response})
             
-        except AuthenticationError:
-            st.error("API Error: Authentication failed. Your API key is invalid. Please get a new key.")
-            # 💡 يتم إرسال المستخدم إلى شاشة إعداد API عند فشل المصادقة
-            st.session_state['api_configured'] = False 
-            st.rerun() 
-        except APIError as e:
-            st.error(f"API Error: An unexpected API error occurred. Details: {str(e)}")
+        except requests.exceptions.HTTPError as e:
+            if response.status_code == 400:
+                 st.error("API Error (400): Bad Request. Check system instructions or prompt length.")
+            elif response.status_code == 403 or response.status_code == 401:
+                 st.error("API Error: Authentication Failed. Please check your Gemini API Key.")
+                 st.session_state['api_configured'] = False 
+                 st.rerun() 
+            else:
+                 st.error(f"API Error: {response.status_code} - {e}")
         except Exception as e:
             st.error(f"An unexpected error occurred: {str(e)}")
             
@@ -251,76 +273,38 @@ Remember, stay in character.
 def display_api_setup():
     """💡 شاشة إعداد API Key يدوياً (تمت إعادتها)"""
     st.title("🔑 API KEY SETUP REQUIRED") 
-    st.error("Authentication failed or API Key is missing. Please enter a valid OpenRouter Key.")
+    st.error("Authentication failed or API Key is missing. Please enter a valid Gemini API Key.")
 
     with st.form("api_setup_form"):
         # 💡 نستخدم المفتاح القديم كقيمة مبدئية
-        new_api_key = st.text_input("Paste OpenRouter API Key:", type="password", value=st.session_state['api_key'] if st.session_state['api_key'] else "")
+        new_api_key = st.text_input("Paste Gemini API Key:", type="password", value=st.session_state['api_key'] if st.session_state['api_key'] else "")
         submitted = st.form_submit_button("SAVE AND CONTINUE")
 
         if submitted and new_api_key:
             try:
-                # محاولة إنشاء العميل للتحقق من المفتاح الجديد
-                client_test = OpenAI(
-                    api_key=new_api_key,
-                    base_url=_PROVIDERS[API_PROVIDER]["BASE_URL"],
-                )
-                client_test.models.list() 
+                # 💡 لا يمكننا التحقق من مفتاح Gemini بدون عمل مكلف. نفترض صحته ونترك الفشل للدردشة.
                 
-                # نجاح التحقق
                 st.session_state['api_key'] = new_api_key
                 st.session_state['api_configured'] = True
-                st.success("API KEY VERIFIED. PROCEEDING TO CHAT.")
+                st.success("API KEY SAVED. PROCEEDING TO CHAT.")
                 time.sleep(1)
                 st.rerun()
-            except AuthenticationError:
-                st.error("ERROR: INVALID KEY. Please check the key provided by OpenRouter.")
             except Exception as e:
                  st.error(f"FAILED TO CONNECT: {e}")
 
 
 def display_activation_screen():
-    """Renders the license activation screen with cinematic look."""
+    """Renders the license activation screen."""
     
-    # Custom CSS for Dark Theme and Blood Title Effect
+    # Custom CSS (Keeping the last dark style for clean look)
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-        
-        /* Global Background and Text - Black */
-        .stApp {
-            background-color: #0d0d0d !important; 
-            color: #f0f0f0;
-        }
-        
-        /* Custom Ornate Font */
-        h1, h2, h3, h4, .stButton>button, [data-testid="stSidebar"] {
-            font-family: 'Orbitron', sans-serif !important;
-            color: #FF4B4B; 
-        }
-
-        /* Custom Blood Title Effect - Blood Red */
-        .blood-title {
-            color: #FF4B4B; 
-            text-shadow: 0 0 10px rgba(255, 0, 0, 0.8), 0 0 20px rgba(139, 0, 0, 0.6);
-            border-bottom: 3px solid #8b0000;
-            padding-bottom: 5px;
-            margin-bottom: 20px;
-        }
-        
-        /* Container Styling - Dark background with blood red border */
-        .container-bg {
-            background-color: #1a1a1a;
-            border: 2px solid #8b0000;
-            box-shadow: 0 0 15px rgba(139, 0, 0, 0.6);
-        }
-        
-        /* Buttons - Blood Red */
-        .stButton>button {
-            background-color: #8b0000;
-            color: white;
-            border: 1px solid #FF4B4B;
-        }
+        .stApp { background-color: #0d0d0d !important; color: #f0f0f0; }
+        h1, h2, h3, h4, .stButton>button, [data-testid="stSidebar"] { font-family: 'Orbitron', sans-serif !important; color: #FF4B4B; }
+        .blood-title { color: #FF4B4B; text-shadow: 0 0 10px rgba(255, 0, 0, 0.8); border-bottom: 3px solid #8b0000; padding-bottom: 5px; margin-bottom: 20px; }
+        .container-bg { background-color: #1a1a1a; border: 2px solid #8b0000; box-shadow: 0 0 15px rgba(139, 0, 0, 0.6); }
+        .stButton>button { background-color: #8b0000; color: white; border: 1px solid #FF4B4B; }
         </style>
         """, unsafe_allow_html=True)
 
@@ -349,7 +333,7 @@ def display_activation_screen():
                     if save_license_info(user_key, expiry_date, license_type):
                         st.success(f"ACCESS GRANTED! LICENSE: {license_type} | DURATION: {duration_info}. REDIRECTING...")
                         time.sleep(1)
-                        # 💡 لا نغير حالة API هنا، بل نتوجه إلى شاشة API
+                        st.session_state['api_configured'] = False 
                         st.rerun() 
                     else:
                         st.error("ERROR: FAILED TO SAVE LICENSE FILE.")
@@ -359,7 +343,6 @@ def display_activation_screen():
     with col2:
         st.markdown("<h3>💰 PAYMENT & CONTACT</h3>", unsafe_allow_html=True)
         
-        # Display Static Dragon Image (Placeholder)
         st.image(DRAGON_HEAD_URL, caption="ORACLE SENTINEL", use_column_width=True)
         
         st.markdown(f"""
@@ -372,47 +355,25 @@ def display_activation_screen():
     st.markdown('</div>', unsafe_allow_html=True)
                 
 def display_chat_interface():
-    """Renders the main chat interface with blood background."""
+    """Renders the main chat interface."""
     
-    # Custom CSS for Dark Theme and Blood Chat Background
     st.markdown(f"""
         <style>
-        /* Global Background and Text */
-        .stApp {{
-            background-color: #0a0a0a !important;
-            color: #f0f0f0;
-        }}
-        /* Chat Box Background - Blood Texture/Dark Red */
+        /* Chat Box Background - Reverting to simple dark background */
         .main [data-testid="stVerticalBlock"] > div:first-child {{
-            background-image: url('{BLOOD_FRAME_URL}'); 
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: local;
+            background-color: #1a1a1a; 
+            border: 1px solid #8b0000;
             padding: 10px;
             border-radius: 10px;
-            border: 1px solid #8b0000;
         }}
         
-        /* Chat Title */
-        h1 {{
-             color: #FF4B4B;
-             text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
-        }}
-        
-        /* 💡 أيقونة الدردشة: استخدام صورة مخصصة (تنين) */
-        .stChatMessage [data-testid="stChatMessage"] img {{
-            content: url('{DRAGON_EMOJI}'); /* Use the placeholder emoji */
-            width: 35px;
-            height: 35px;
-        }}
+        h1 {{ color: #FF4B4B; text-shadow: 0 0 10px rgba(255, 0, 0, 0.8); }}
         </style>
         """, unsafe_allow_html=True)
 
     st.title("LUCIFER AI CHAT")
     
-    # 1. Display Chat History
-    for message in st.session_state.chat_history:
+    for message in st.session_state.chatHistory:
         if message["role"] == "user":
             with st.chat_message("user"):
                 st.markdown(message["content"])
@@ -421,7 +382,6 @@ def display_chat_interface():
                 cleaned_content = re.sub(r"\[lucifer\]:\s*", '', message["content"], count=1)
                 st.markdown(cleaned_content)
         
-    # 2. Handle User Input
     user_prompt = st.chat_input("ENTER COMMAND...")
 
     if user_prompt:
@@ -442,22 +402,10 @@ def display_chat_interface():
 
 def display_sidebar():
     """Renders the sidebar with status and menu options."""
-    # Custom CSS for Sidebar (Dark)
     st.markdown("""
         <style>
-        [data-testid="stSidebar"] {
-            background-color: #0d0d0d !important;
-            color: #FF4B4B;
-        }
-        /* Style for the buttons in the sidebar */
-        .stButton>button {
-            width: 100%;
-            margin-bottom: 10px;
-            background-color: #5a0000;
-            border-color: #FF4B4B;
-            font-family: 'Orbitron', sans-serif !important;
-            color: white !important;
-        }
+        [data-testid="stSidebar"] { background-color: #0d0d0d !important; color: #FF4B4B; }
+        .stButton>button { width: 100%; margin-bottom: 10px; background-color: #5a0000; border-color: #FF4B4B; font-family: 'Orbitron', sans-serif !important; color: white !important; }
         </style>
         """, unsafe_allow_html=True)
         
@@ -489,6 +437,11 @@ def display_sidebar():
                 st.sidebar.success("DEACTIVATION SUCCESSFUL.")
             time.sleep(1)
             st.rerun()
+        # 💡 زر API Setup هنا في Sidebar (متاح دائمًا إذا كان مُفعلًا)
+        if st.sidebar.button("CONFIGURE API KEY"):
+             st.session_state['api_configured'] = False # يدفع المستخدم لشاشة الإعداد
+             st.rerun()
+
     else:
         st.sidebar.button("ACTIVATE APPLICATION")
 
@@ -501,11 +454,10 @@ def main():
     display_sidebar()
 
     if st.session_state['activated']:
-        # 💡 إذا كان مُفعلاً ولكنه لم يقم بتهيئة الـ API بعد، اعرض شاشة API
         if st.session_state['api_configured']:
             display_chat_interface()
         else:
-            display_api_setup()
+            display_api_setup() # يعرض شاشة لإدخال المفتاح يدوياً
     else:
         display_activation_screen()
 

@@ -8,8 +8,7 @@ import time
 import json
 import streamlit as st
 from datetime import datetime, timedelta, timezone, date
-# 💡 حذف استيراد openai لأننا سنستخدم requests مباشرة لـ Gemini
-# from openai import OpenAI, AuthenticationError, APIError 
+from openai import OpenAI, AuthenticationError, APIError 
 import requests 
 
 # --- Initialization and Configuration Setup ---
@@ -26,15 +25,15 @@ if 'initialized' not in st.session_state:
 
 # Supported providers and their settings
 _PROVIDERS = {
-    # 💡 المزود الأساسي الآن هو Gemini
-    "gemini_test": {
-        "BASE_URL": "https://generativelanguage.googleapis.com/v1beta/models/",
-        "MODEL_NAME": "gemini-2.5-flash:generateContent",
+    # 💡 المزود الأساسي الآن هو OpenRouter
+    "openrouter": {
+        "BASE_URL": "https://openrouter.ai/api/v1",
+        "MODEL_NAME": "mistralai/mistral-7b-instruct-v0.2",
     },
 }
 
 # 💡 المزود الافتراضي (للاستخدام المجاني)
-API_PROVIDER = "gemini_test" 
+API_PROVIDER = "openrouter" 
 
 # --- CONFIGURATION & CONSTANTS (Reverting to original style) ---
 LICENSE_FILE = ".lucifer.lic"
@@ -194,9 +193,12 @@ Remember, stay in character.
             st.error(f"Error: Unsupported API Provider: {API_PROVIDER}")
             raise ValueError(f"Unsupported API Provider: {API_PROVIDER}")
         
-        # 💡 No OpenAI client needed, just store the key for use in requests
-        self.api_key = api_key
-        
+        # 💡 OpenRouter API uses the standard OpenAI client
+        self.client = OpenAI(
+            api_key=api_key,
+            base_url=_PROVIDERS[API_PROVIDER]["BASE_URL"], 
+            default_headers={"HTTP-Referer": "Lucifer-Streamlit-App", "X-Title": "lucifer-Web-App"},
+        )
         if st.session_state['chat_history'] == []:
             st.session_state['chat_history'].append({"role": "system", "content": self.HACX_SYSTEM_PROMPT})
             
@@ -208,62 +210,37 @@ Remember, stay in character.
 
         st.session_state['chat_history'].append({"role": "user", "content": user_prompt})
         
-        # 1. Prepare history for Gemini API call
-        messages_for_api = [
-            {"role": "user", "parts": [{"text": msg["content"]}]}
-            if msg["role"] == "user" else 
-            {"role": "model", "parts": [{"text": msg["content"]}]}
-            for msg in st.session_state['chat_history']
-        ]
-
-        # 2. Build Payload
-        payload = {
-            "contents": messages_for_api,
-            "config": {
-                "temperature": 0.7
-            }
-        }
-        
-        # 3. Construct URL
-        base_url = _PROVIDERS[API_PROVIDER]["BASE_URL"]
-        model_endpoint = _PROVIDERS[API_PROVIDER]["MODEL_NAME"]
-        
-        # 💡 Gemini URL structure: BASE_URL + MODEL + ?key=API_KEY
-        api_url = f"{base_url}{model_endpoint}?key={self.api_key}"
+        # Prepare history for API call
+        messages_for_api = [m for m in st.session_state['chat_history'] if m['role'] != 'display']
 
         try:
-            # 4. API Call
-            response_placeholder = st.empty()
-            
-            response = requests.post(
-                api_url,
-                headers={'Content-Type': 'application/json'},
-                json=payload
+            # 💡 Call OpenRouter API using the streaming method
+            stream = self.client.chat.completions.create(
+                model=_PROVIDERS[API_PROVIDER]["MODEL_NAME"],
+                messages=messages_for_api,
+                stream=True,
+                temperature=0.7
             )
-            response.raise_for_status() 
-            result = response.json()
-            
-            # 5. Extract Response
-            candidate = result.get('candidates', [{}])[0]
-            final_response_text = candidate.get('content', {}).get('parts', [{}])[0].get('text', 'API did not return text.')
-            
-            full_response = final_response_text
-            
-            # Display response
-            cleaned_md = re.sub(r"\[lucifer\]:\s*", '', full_response, count=1)
-            response_placeholder.markdown(cleaned_md)
+            full_response = ""
+            response_placeholder = st.empty()
+
+            for chunk in stream:
+                content = chunk.choices[0].delta.content
+                if content is not None:
+                    full_response += content
+                    cleaned_md = re.sub(r"\[lucifer\]:\s*", '', full_response, count=1)
+                    response_placeholder.markdown(cleaned_md)
             
             # Save final response to history
             st.session_state['chat_history'].append({"role": "assistant", "content": full_response})
             
-        except requests.exceptions.HTTPError as e:
-            # 💡 معالجة خطأ API بشكل صحيح
-            if e.response.status_code == 403 or e.response.status_code == 401:
-                 st.error("API Error: Authentication Failed. Please check your Gemini API Key.")
-                 st.session_state['api_configured'] = False 
-                 st.rerun() 
-            else:
-                 st.error(f"API Error: {e.response.status_code} - {e}")
+        except AuthenticationError:
+            # 💡 معالجة خطأ OpenRouter API
+            st.error("API Error: Authentication Failed. Please check your OpenRouter API Key.")
+            st.session_state['api_configured'] = False 
+            st.rerun() 
+        except APIError as e:
+            st.error(f"API Error: An unexpected API error occurred. Details: {str(e)}")
         except Exception as e:
             st.error(f"An unexpected error occurred: {str(e)}")
             
@@ -272,22 +249,29 @@ Remember, stay in character.
 def display_api_setup():
     """💡 شاشة إعداد API Key يدوياً (تمت إعادتها)"""
     st.title("🔑 API KEY SETUP REQUIRED") 
-    st.error("Authentication failed or API Key is missing. Please enter a valid Gemini API Key.")
+    st.error("Authentication failed or API Key is missing. Please enter a valid OpenRouter Key.")
 
     with st.form("api_setup_form"):
         # 💡 نستخدم المفتاح القديم كقيمة مبدئية
-        new_api_key = st.text_input("Paste Gemini API Key:", type="password", value=st.session_state['api_key'] if st.session_state['api_key'] else "")
+        new_api_key = st.text_input("Paste OpenRouter API Key:", type="password", value=st.session_state['api_key'] if st.session_state['api_key'] else "")
         submitted = st.form_submit_button("SAVE AND CONTINUE")
 
         if submitted and new_api_key:
             try:
-                # 💡 نفترض صحة المفتاح ونترك الفشل لـ get_response (للتوفير في عدد الطلبات)
+                # التحقق المبدئي من المفتاح
+                client_test = OpenAI(
+                    api_key=new_api_key,
+                    base_url=_PROVIDERS[API_PROVIDER]["BASE_URL"],
+                )
+                client_test.models.list() 
                 
                 st.session_state['api_key'] = new_api_key
                 st.session_state['api_configured'] = True
-                st.success("API KEY SAVED. PROCEEDING TO CHAT.")
+                st.success("API KEY VERIFIED. PROCEEDING TO CHAT.")
                 time.sleep(1)
                 st.rerun()
+            except AuthenticationError:
+                st.error("ERROR: INVALID KEY. Please check the key provided by OpenRouter.")
             except Exception as e:
                  st.error(f"FAILED TO CONNECT: {e}")
 
